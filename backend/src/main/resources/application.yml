@@ -1,0 +1,41 @@
+server:
+  port: ${PORT:8787}
+  tomcat:
+    max-swallow-size: 20MB
+
+spring:
+  application:
+    name: fitlog-backend
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3308}/${MYSQL_DATABASE:fitlog}?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=convertToNull
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:123456}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 5000
+  sql:
+    init:
+      mode: never
+  servlet:
+    multipart:
+      max-file-size: 250MB
+      max-request-size: 250MB
+  web:
+    resources:
+      static-locations: file:../dist/web/,file:./dist/web/,classpath:/static/
+
+fitlog:
+  secret: ${FITLOG_SECRET:fitlog-dev-secret-change-me}
+  data-dir: ${FITLOG_DATA_DIR:./backend/data}
+  upload-dir: ${FITLOG_DATA_DIR:./backend/data}/uploads
+  export-dir: ${FITLOG_DATA_DIR:./backend/data}/exports
+  is-prod: ${FITLOG_PROD:false}
+  show-sms-code: ${FITLOG_SHOW_SMS_CODE:true}
+  enable-demo: ${FITLOG_ENABLE_DEMO:true}
+  quota-gb: 50
+  budget-cap-cny: 20
+  public-daily-quota: 20
+  access-token-ttl-seconds: 7200
+  refresh-token-ttl-seconds: 2592000
+  media-sign-ttl-seconds: 7200
