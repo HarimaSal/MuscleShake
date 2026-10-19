@@ -15,4 +15,10 @@ public class SpaController {
     public String deepLinks() {
         return "forward:/index.html";
     }
+
+    /** 运营后台是独立 SPA，构建产物位于 dist/web/admin。 */
+    @GetMapping({"/ops", "/ops/**"})
+    public String ops() {
+        return "forward:/admin/index.html";
+    }
 }

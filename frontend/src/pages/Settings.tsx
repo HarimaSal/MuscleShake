@@ -159,8 +159,8 @@ export function Settings() {
             </button>
           ))}
           {user.role === 'admin' && (
-            <button onClick={() => navigate('/admin')} style={{ color: 'var(--accent)' }}>
-              审核后台 →
+            <button onClick={() => navigate('/ops')} style={{ color: 'var(--accent)' }}>
+              运营后台 →
             </button>
           )}
         </nav>

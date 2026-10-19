@@ -79,5 +79,6 @@ replay_pid*
 # ---------- 临时文件 ----------
 .tmp/
 tmp/
+.workbuddy/
 *.orig
 *.rej

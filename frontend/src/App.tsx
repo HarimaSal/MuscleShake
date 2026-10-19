@@ -16,7 +16,6 @@ import { PostEditor } from './pages/PostEditor';
 import { PublicPost } from './pages/PublicPost';
 import { Settings } from './pages/Settings';
 import { Community } from './pages/Community';
-import { Admin } from './pages/Admin';
 
 function RequireAuth() {
   const { user, booting } = useApp();
@@ -46,7 +45,7 @@ export function App() {
         <Route path="/posts/:id/edit" element={<PostEditor />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/community" element={<Community />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin" element={<Navigate to="/ops" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

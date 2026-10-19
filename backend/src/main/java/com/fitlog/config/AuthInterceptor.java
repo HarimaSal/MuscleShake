@@ -29,6 +29,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
         if (!(handler instanceof HandlerMethod)) return true;
         String path = request.getRequestURI();
+        if (path.startsWith("/api/ops/")) return true;
         String method = request.getMethod();
         boolean optional = optional(path, method);
 

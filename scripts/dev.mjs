@@ -60,10 +60,12 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
 }
 
 if (await backendRunning()) {
-  console.log(`[dev] 检测到 ${apiPort} 的 FitLog 后端已运行，跳过 dev:api，仅启动前端`);
+  console.log(`[dev] 检测到 ${apiPort} 的 FitLog 后端已运行，跳过 dev:api，启动前台 + 运营后台`);
   start('dev:frontend');
+  start('dev:admin');
 } else {
-  console.log('[dev] 启动 Spring Boot 与前端');
+  console.log('[dev] 启动 Spring Boot、前台与运营后台');
   start('dev:api');
   start('dev:frontend');
+  start('dev:admin');
 }

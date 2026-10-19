@@ -18,7 +18,8 @@
 | 后端 | Java 21、Spring Boot 3.3.5、Spring MVC、JdbcTemplate、MySQL Connector/J、ZXing |
 | 数据库 | MySQL 8.x，`127.0.0.1:3308`，用户 `root`，密码 `123456`，库 `fitlog` |
 | 前端 | React 18、Vite 5、TypeScript、React Router |
-| 测试 | `node:test` API 冒烟 + 无头 Chrome 页面检查 |
+| 运营后台 | `/ops` 独立入口、独立账号体系、TOTP、动作版本化、官方内容复核与配置中心 |
+| 测试 | `node:test` API 冒烟 + 无头 Chrome 页面检查（前台 + 运营后台） |
 
 ```
 .
@@ -31,7 +32,8 @@
 │     ├─ workout/               训练记录、组、模板
 │     ├─ checkin/               打卡、徽章
 │     ├─ media/                 分片上传、签名 URL、配额与预算
-│     ├─ post/                  文章、公开页、审核后台
+│     ├─ post/                  文章、公开页、审核
+│     ├─ ops/                   运营后台：独立鉴权、动作版本、官方内容、配置、审计
 │     ├─ stats/                 概览、趋势、PR、周报、身体数据
 │     ├─ export/                CSV / JSON 导出
 │     └─ common/                Db、时间、指标、校验、异常、审计
@@ -40,13 +42,23 @@
 │  └─ fitlog_seed.sql           135 个动作 + 演示账号/训练/文章种子
 ├─ scripts/
 │  ├─ init-mysql.mjs            执行 DDL + 种子（部署辅助）
-│  ├─ dev.mjs                   开发启动器（后端已运行则只启动前端）
+│  ├─ dev.mjs                   开发启动器（前台 + 独立运营后台）
 │  └─ run-with-jdk21.mjs        自动选择 JDK 21 执行 Maven / Java
-├─ frontend/                    React 前端
+├─ frontend/
+│  ├─ src/                      React 前台源码
+│  ├─ index.html                前台 Vite 入口
+│  └─ admin/                    独立运营后台 Vite 应用
+│     ├─ index.html
+│     ├─ vite.config.ts
+│     ├─ tsconfig.json
+│     └─ src/                   运营后台源码
 ├─ tests/
 │  ├─ smoke.test.mjs            11 组 API 冒烟
-│  └─ ui-check.mjs              19 个页面/场景无头浏览器检查
-└─ PRD-健身记录产品_FitLog_v1.3.md
+│  ├─ ui-check.mjs              19 个前台页面/场景检查
+│  └─ ops-ui-check.mjs          25 个运营后台页面检查
+└─ docs/
+   ├─ PRD-健身记录产品_FitLog_v1.3.md
+   └─ PRD-运营后台_FitLog-Ops_v2.0.md
 ```
 
 ---
@@ -87,32 +99,45 @@ npm run db:init
 # 终端 A：Spring Boot :8787
 npm run dev:api
 
-# 终端 B：Vite :5173（/api 代理到 8787）
+# 终端 B：前台 Vite :5173
 npm run dev:frontend
-# 或一条命令同时启动
+
+# 终端 C：运营后台独立 Vite :5174
+npm run dev:admin
+
+# 或一条命令同时启动前端 + 运营后台
 npm run dev
 ```
 
-打开 http://localhost:5173 。
+- 前台：http://localhost:5173
+- 运营后台：http://localhost:5174/ops/
+- 也可以从主站入口 http://localhost:5173/ops 透传到独立后台
 
-`npm run dev` 会先探测 `8787/api/health`：如果后端已由 IDE 或另一个终端启动，只启动前端，避免端口冲突；否则同时启动 Spring Boot 与前端。`dev:api`、`build:backend`、`start` 会自动寻找 JDK 21，无需手动切换 `JAVA_HOME`；直接执行 `mvn` 命令时才需要把 `JAVA_HOME` 指向 21。
+`npm run dev` 会先探测 `8787/api/health`：如果后端已由 IDE 或另一个终端启动，只启动前台与运营后台；否则同时启动 Spring Boot、前台与运营后台。`dev:api`、`build:backend`、`start` 会自动寻找 JDK 21，无需手动切换 `JAVA_HOME`；直接执行 `mvn` 命令时才需要把 `JAVA_HOME` 指向 21。
 
 ### 2.3 生产构建与启动
 
 ```powershell
-npm run build     # mvn package + vite build
+npm run build     # 后端 + 前台 build:frontend + 后台 build:admin
 npm start         # java -jar backend/target/fitlog-backend-1.3.0.jar
 # 打开 http://localhost:8787
 ```
 
-Spring Boot 会同时托管 `dist/web`，`/login`、`/sessions/**`、`/posts/**`、`/p/**` 等深链接回退到 `index.html`。
+构建产物：
+
+```text
+dist/web/          前台静态站点
+dist/web/admin/    运营后台静态站点（资源前缀 /admin/）
+```
+
+Spring Boot 托管 `dist/web`：前台 `/login`、`/sessions/**`、`/posts/**`、`/p/**` 回退 `index.html`；运营后台 `/ops`、`/ops/**` 回退 `admin/index.html`。
 
 ### 2.4 演示账号
 
 | 账号 | 说明 |
 | --- | --- |
 | `13800000000` | 演示用户「李衡」，含 8 周训练、打卡、PR、文章；登录页可一键进入 |
-| `13900000000` | 审核员，可进入审核后台；登录页可一键进入 |
+| `13900000000` | 演示审核员；运营后台使用独立账号 `admin` / `FitLog@2026!` |
 | 任意 11 位手机号 | 开发环境验证码固定 `123456` |
 
 生产环境设置 `FITLOG_PROD=true` 后，演示登录与验证码回显默认关闭，可显式设置 `FITLOG_ENABLE_DEMO=true` / `FITLOG_SHOW_SMS_CODE=true`。
@@ -239,3 +264,55 @@ $env:APP_URL='http://localhost:8787'; npm run smoke:ui
 - 小程序客户端未随仓库交付：PRD 13.2.2 / RK-16 指出的域名、ICP、SSL、企业主体为硬前置；服务端已提供 `wechat/login` 与全部同构 API，手机端由响应式 H5 覆盖。
 - 支付、商城、课程、社区 feed/关注/评论按 PRD 非目标未实现；`/api/feed` 等保留 501 命名空间。
 - 默认面向内测规模（≤100 注册 / ≤40 活跃）；扩大规模前请评估 MySQL 连接池、媒体存储与预算闸门。
+
+---
+
+## 8. 运营后台 FitLog Ops v2.0
+
+运营后台是独立 Vite 应用（`frontend/admin`）、独立入口、独立账号体系的后台管理平台，与前台用户 Token 物理隔离。前台构建产物为 `dist/web`，后台为 `dist/web/admin`，由 Spring Boot 分别托管 `/` 与 `/ops`。
+
+```text
+开发：http://localhost:5174/ops/login
+生产：http://localhost:8787/ops/login
+```
+
+开发环境账号：
+
+```text
+账号：admin
+密码：FitLog@2026!
+TOTP：登录页自动填充（也可点击“演示登录”）
+```
+
+生产部署必须更换密码、绑定真实认证器并离线保存系统页生成的一次性恢复码；`/api/ops/auth/dev-code` 仅在非生产且 `fitlog.show-sms-code=true` 时返回验证码。
+
+### 已实现的 22 个页面 / 场景
+
+- 工作台、动作列表、动作编辑、版本历史、批量导入、搜索质量、合并与归档
+- 官方内容、官方内容编辑器、官方训练模板、帮助页 / FAQ、横幅公告
+- 审核队列、举报 / 申诉、规则库、抽查工作台
+- 配置中心、配置详情、用户与处置、数据看板
+- 系统与审计（后台账号 / 审计日志 / 恢复码 / 90 天权限复核）、测试号
+
+核心能力：
+
+- 独立 `admin_accounts` / `admin_sessions`、PBKDF2 密码、TOTP、5 次失败锁定 30 分钟、30 分钟空闲会话、8 小时绝对过期、一次性恢复码
+- 动作库变更版本化、影响评估、敏感字段策略、自建动作提升、CSV 预览导入、合并重定向、归档恢复、搜索无结果补别名
+- 官方内容单人/双人复核、8 项发布清单、10 秒冷却、排期/下线、发布后抽查、已发布内容编辑保留线上旧版
+- 17 项配置集中管理、高风险二次确认、强制原因、历史回滚、配置审计、Web / 小程序分端 feature flag
+- 用户手机号掩码、规则编号处置、通知、注销冷静期队列、测试号创建/重置
+- 审核 SLA 队列、举报与申诉复核、规则库、抽查退回
+- 双科目成本（用户内容 / 官方内容）、启动→打卡漏斗、动作覆盖与内容 Top、审计 CSV 导出
+- 运营后台通过 `OpsSchemaInitializer` 启动时幂等创建增量表、补齐字段并写入种子账号，不要求手动迁移；生产发布前建议将增量 DDL 固化为独立迁移脚本并纳入发布流程
+
+### 运营后台测试
+
+```powershell
+# 先启动包含运营后台的后端（默认 8787）
+npm run build
+npm start
+# 另一终端
+$env:APP_URL='http://localhost:8787'; npm run smoke:ops
+```
+
+当前验证：运营后台页面检查 **25/25 通过**（登录、工作台、动作列表/编辑/版本/导入/合并/搜索质量、配置中心/详情、官方内容/编辑/模板/帮助/横幅、用户、审核队列、举报申诉、规则库、抽查、数据看板、系统、测试号），前台 API 冒烟 **11/11 通过**，前台页面检查 **19/19 通过**。

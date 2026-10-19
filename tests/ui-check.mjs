@@ -165,12 +165,12 @@ if (postInfo.publicId) {
 }
 
 await evaluate(`(async () => {
-  const res = await fetch('/api/auth/admin-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const res = await fetch('/api/ops/auth/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   const body = await res.json();
-  localStorage.setItem('fitlog.tokens', JSON.stringify(body.data.tokens));
+  localStorage.setItem('fitlog.ops.token', body.data.token);
 })()`);
-const adminText = await go('/admin');
-checks.push(['审核后台', adminText.includes('审核后台') && adminText.includes('审核队列')]);
+const adminText = await go('/ops');
+checks.push(['运营后台', adminText.includes('工作台') && adminText.includes('待审核内容')]);
 await shot('admin');
 
 await evaluate(`(async () => {

@@ -13,6 +13,11 @@ export default defineConfig({
         target: `http://127.0.0.1:${API_PORT}`,
         changeOrigin: true,
       },
+      // 运营后台是独立 Vite 应用（frontend/admin，:5174）；开发时从主站 /ops 透传。
+      '/ops': {
+        target: 'http://127.0.0.1:5174',
+        changeOrigin: true,
+      },
     },
   },
   build: {

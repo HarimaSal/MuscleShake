@@ -86,6 +86,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
+      if (window.location.pathname.startsWith('/ops')) {
+        setBooting(false);
+        return;
+      }
       await refreshConfig();
       if (getTokens()?.accessToken) await loadMe();
       setBooting(false);
